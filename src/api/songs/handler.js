@@ -24,12 +24,33 @@ class SongsHandler {
     return response;
   }
 
-  async getSongsHandler() {
+  async getSongsHandler(request) {
     const songs = await this._service.getSongs();
+    const title = request.query.title;
+    const performer = request.query.performer;
+    let result = songs;
+
+    if (title && performer) {
+      result = songs.filter(
+        (song) =>
+          song.title.toLowerCase().includes(title.toLowerCase()) &&
+          song.performer.toLowerCase().includes(performer.toLowerCase())
+      );
+      console.log(result);
+    } else if (title) {
+      result = songs.filter((song) =>
+        song.title.toLowerCase().includes(title.toLowerCase())
+      );
+    } else if (performer) {
+      result = songs.filter((song) =>
+        song.performer.toLowerCase().includes(performer.toLowerCase())
+      );
+    }
+
     return {
       status: "success",
       data: {
-        songs,
+        songs: result,
       },
     };
   }
