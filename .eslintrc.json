@@ -15,6 +15,7 @@
       {
         "endOfLine": "auto"
       }
-    ]
+    ],
+    "no-comma-dangle": []
   }
 }
