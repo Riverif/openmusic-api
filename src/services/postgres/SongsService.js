@@ -3,6 +3,7 @@ const { nanoid } = require("nanoid");
 
 const InvariantError = require("../../exceptions/InvariantError");
 const NotFoundError = require("../../exceptions/NotFoundError");
+const { mapSongDBToModel } = require("../../utils/index");
 
 class SongsService {
   constructor() {
@@ -44,7 +45,7 @@ class SongsService {
       throw new NotFoundError("Song tidak ditemukan");
     }
 
-    return result.rows[0];
+    return result.rows.map(mapSongDBToModel)[0];
   }
 
   async editSongById(id, body) {

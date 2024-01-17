@@ -3,6 +3,7 @@ const { nanoid } = require("nanoid");
 
 const InvariantError = require("../../exceptions/InvariantError");
 const NotFoundError = require("../../exceptions/NotFoundError");
+const { mapSongDBToModel } = require("../../utils/index");
 
 class AlbumsService {
   constructor() {
@@ -28,16 +29,24 @@ class AlbumsService {
 
   async getAlbumById(id) {
     const query = {
-      text: "SELECT * FROM albums WHERE id = $1",
+      text: `SELECT * FROM albums WHERE id = $1`,
       values: [id],
     };
     const result = await this._pool.query(query);
-
     if (!result.rows.length) {
       throw new NotFoundError("Album tidak ditemukan");
     }
 
     return result.rows[0];
+  }
+
+  async getAlbumSongsById(id) {
+    const query = {
+      text: `SELECT * FROM songs WHERE album_id = $1`,
+      values: [id],
+    };
+    const result = await this._pool.query(query);
+    return result.rows.map(mapSongDBToModel);
   }
 
   async editAlbumById(id, { name, year }) {
