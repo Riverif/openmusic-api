@@ -25,32 +25,13 @@ class SongsHandler {
   }
 
   async getSongsHandler(request) {
-    const songs = await this._service.getSongs();
-    const title = request.query.title;
-    const performer = request.query.performer;
-    let result = songs;
-
-    if (title && performer) {
-      result = songs.filter(
-        (song) =>
-          song.title.toLowerCase().includes(title.toLowerCase()) &&
-          song.performer.toLowerCase().includes(performer.toLowerCase())
-      );
-      console.log(result);
-    } else if (title) {
-      result = songs.filter((song) =>
-        song.title.toLowerCase().includes(title.toLowerCase())
-      );
-    } else if (performer) {
-      result = songs.filter((song) =>
-        song.performer.toLowerCase().includes(performer.toLowerCase())
-      );
-    }
+    const { title = "", performer = "" } = request.query;
+    const songs = await this._service.getSongs(title, performer);
 
     return {
       status: "success",
       data: {
-        songs: result,
+        songs,
       },
     };
   }
@@ -71,7 +52,7 @@ class SongsHandler {
     this._validator.validateSongPayload(request.payload);
     const { id } = request.params;
 
-    const songId = await this._service.editSongById(id, request.payload);
+    await this._service.editSongById(id, request.payload);
 
     return {
       status: "success",
@@ -81,7 +62,7 @@ class SongsHandler {
 
   async deleteSongByIdHandler(request, h) {
     const { id } = request.params;
-    const songId = await this._service.deleteSongById(id);
+    await this._service.deleteSongById(id);
     return {
       status: "success",
       message: "Song berhasil dihapus",

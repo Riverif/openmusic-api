@@ -29,12 +29,24 @@ class AlbumsService {
 
   async getAlbumById(id) {
     const query = {
-      text: `SELECT * FROM albums WHERE id = $1`,
+      text: `SELECT a.*, 
+        array_to_json(array_agg(json_build_object(
+          'id', s.id,
+          'title', s.title,
+          'performer', s.performer))) AS songs
+        FROM albums a 
+        LEFT JOIN songs s ON s.album_id = a.id
+        WHERE a.id = $1
+        GROUP BY a.id`,
       values: [id],
     };
     const result = await this._pool.query(query);
+
     if (!result.rows.length) {
       throw new NotFoundError("Album tidak ditemukan");
+    }
+    if (!result.rows[0].songs[0].id) {
+      result.rows[0].songs = [];
     }
 
     return result.rows[0];
