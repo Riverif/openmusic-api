@@ -1,9 +1,16 @@
 const autoBind = require("auto-bind");
 
 class PlaylistsHandler {
-  constructor(playlistsService, playlistSongsService, songsService, validator) {
+  constructor(
+    playlistsService,
+    playlistSongsService,
+    playlistSongActivitiesService,
+    songsService,
+    validator,
+  ) {
     this._playlistsService = playlistsService;
     this._playlistSongsService = playlistSongsService;
+    this._playlistSongActivitiesService = playlistSongActivitiesService;
     this._songsService = songsService;
     this._validator = validator;
 
@@ -59,6 +66,8 @@ class PlaylistsHandler {
     const { id: credentialId } = request.auth.credentials;
     const { id } = request.params;
     const { songId } = request.payload;
+    const currentDate = new Date();
+    const formattedDate = currentDate.toISOString();
 
     await this._playlistsService.verifyPlaylistsOwner(id, credentialId);
     await this._songsService.getSongById(songId);
@@ -66,6 +75,14 @@ class PlaylistsHandler {
     const playlistSongId = await this._playlistSongsService.addPlaylistSong(
       id,
       songId,
+    );
+
+    await this._playlistSongActivitiesService.addPlaylistSongActivities(
+      id,
+      songId,
+      credentialId,
+      "add",
+      formattedDate,
     );
 
     const response = h.response({
@@ -100,13 +117,41 @@ class PlaylistsHandler {
     const { id: credentialId } = request.auth.credentials;
     const { id } = request.params;
     const { songId } = request.payload;
+    const currentDate = new Date();
+    const formattedDate = currentDate.toISOString();
 
     await this._playlistsService.verifyPlaylistsOwner(id, credentialId);
     await this._playlistSongsService.deletePlaylistSong(id, songId);
 
+    await this._playlistSongActivitiesService.addPlaylistSongActivities(
+      id,
+      songId,
+      credentialId,
+      "delete",
+      formattedDate,
+    );
+
     return {
       status: "success",
       message: `Lagu berhasil dihapus pada playlist ${id}`,
+    };
+  }
+
+  async getPlaylistSongActivitiesHandler(request) {
+    const { id: credentialId } = request.auth.credentials;
+    const { id } = request.params;
+
+    await this._playlistsService.verifyPlaylistsOwner(id, credentialId);
+
+    const activities =
+      await this._playlistSongActivitiesService.getPlaylistSongActivities(id);
+
+    return {
+      status: "success",
+      data: {
+        playlistId: id,
+        activities,
+      },
     };
   }
 }
