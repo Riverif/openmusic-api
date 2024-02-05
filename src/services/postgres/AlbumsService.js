@@ -3,7 +3,7 @@ const { nanoid } = require("nanoid");
 
 const InvariantError = require("../../exceptions/InvariantError");
 const NotFoundError = require("../../exceptions/NotFoundError");
-const { mapSongDBToModel } = require("../../utils/index");
+const { mapSongDBToModel, mapAlbumDBToModel } = require("../../utils/index");
 
 class AlbumsService {
   constructor() {
@@ -49,7 +49,7 @@ class AlbumsService {
       result.rows[0].songs = [];
     }
 
-    return result.rows[0];
+    return result.rows.map(mapAlbumDBToModel)[0];
   }
 
   async getAlbumSongsById(id) {
@@ -65,6 +65,19 @@ class AlbumsService {
     const query = {
       text: "UPDATE albums SET name = $1, year = $2 WHERE id = $3 RETURNING id",
       values: [name, year, id],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+      throw new NotFoundError("Gagal memperbarui album. Id tidak ditemukan");
+    }
+  }
+
+  async editCoverAlbumById(id, coverUrl) {
+    const query = {
+      text: "UPDATE albums SET cover = $1 WHERE id = $2 RETURNING id",
+      values: [coverUrl, id],
     };
 
     const result = await this._pool.query(query);
