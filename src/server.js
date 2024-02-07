@@ -49,6 +49,10 @@ const ExportsValidator = require("./validator/exports");
 const StorageService = require("./services/storage/StorageService");
 const UploadsValidator = require("./validator/uploads");
 
+//UserAlbumLikes
+const userAlbumLikes = require("./api/userAlbumLikes");
+const UserAlbumLikesService = require("./services/postgres/UserAlbumLikesService");
+
 const init = async () => {
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
@@ -56,10 +60,12 @@ const init = async () => {
 
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
+  const userAlbumLikesService = new UserAlbumLikesService();
 
   const playlistsService = new PlaylistsService(collaborationsService);
   const playlistSongsService = new PlaylistSongsService();
   const playlistSongActivitiesService = new PlaylistSongActivitiesService();
+
   const storageService = new StorageService(
     path.resolve(__dirname, "api/albums/file/covers"),
   );
@@ -158,6 +164,12 @@ const init = async () => {
         service: ProducerService,
         playlistsService,
         validator: ExportsValidator,
+      },
+    },
+    {
+      plugin: userAlbumLikes,
+      options: {
+        service: userAlbumLikesService,
       },
     },
   ]);
