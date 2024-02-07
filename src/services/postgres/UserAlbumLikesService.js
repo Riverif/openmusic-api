@@ -5,8 +5,9 @@ const InvariantError = require("../../exceptions/InvariantError");
 const NotFoundError = require("../../exceptions/NotFoundError");
 
 class UserAlbumLikesService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+    this._cacheService = cacheService;
   }
 
   async addLike(userId, albumId) {
@@ -24,6 +25,7 @@ class UserAlbumLikesService {
         throw new InvariantError("Like gagal ditambahkan.");
       }
 
+      await this._cacheService.delete(`likes:${albumId}`);
       return result.rows[0].id;
     } catch (error) {
       if (error.code === "23503") {
@@ -39,13 +41,25 @@ class UserAlbumLikesService {
   }
 
   async getLikesCount(albumId) {
-    const query = {
-      text: "SELECT * FROM user_album_likes WHERE album_id = $1",
-      values: [albumId],
-    };
+    try {
+      const result = await this._cacheService.get(`likes:${albumId}`);
+      return { data: JSON.parse(result), source: "cache" };
+    } catch (error) {
+      const query = {
+        text: "SELECT * FROM user_album_likes WHERE album_id = $1",
+        values: [albumId],
+      };
 
-    const result = await this._pool.query(query);
-    return result.rows.length;
+      const result = await this._pool.query(query);
+      const countResult = result.rows.length;
+
+      await this._cacheService.set(
+        `likes:${albumId}`,
+        JSON.stringify(countResult),
+      );
+
+      return { data: countResult, source: "database" };
+    }
   }
 
   async deleteLike(userId, albumId) {
@@ -55,9 +69,12 @@ class UserAlbumLikesService {
     };
 
     const result = await this._pool.query(query);
+
     if (!result.rows.length) {
       throw new InvariantError("Kolaborasi gagal dihapus");
     }
+
+    await this._cacheService.delete(`likes:${albumId}`);
   }
 }
 

@@ -53,14 +53,18 @@ const UploadsValidator = require("./validator/uploads");
 const userAlbumLikes = require("./api/userAlbumLikes");
 const UserAlbumLikesService = require("./services/postgres/UserAlbumLikesService");
 
+//Cache
+const CacheService = require("./services/redis/CacheService");
+
 const init = async () => {
+  const cacheService = new CacheService();
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
   const collaborationsService = new CollaborationsService(usersService);
 
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
-  const userAlbumLikesService = new UserAlbumLikesService();
+  const userAlbumLikesService = new UserAlbumLikesService(cacheService);
 
   const playlistsService = new PlaylistsService(collaborationsService);
   const playlistSongsService = new PlaylistSongsService();

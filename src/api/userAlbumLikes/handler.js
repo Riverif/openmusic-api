@@ -27,14 +27,18 @@ class UserAlbumLikesHandler {
   async getAlbumLikesHandler(request, h) {
     const { id: albumId } = request.params;
 
-    const albumLikesCount = await this._service.getLikesCount(albumId);
+    const { data: albumLikesCount, source } =
+      await this._service.getLikesCount(albumId);
 
-    return {
+    const response = h.response({
       status: "success",
+      message: "Like berhasil diambil",
       data: {
         likes: albumLikesCount,
       },
-    };
+    });
+    response.header("X-Data-Source", source);
+    return response;
   }
 
   async deleteAlbumLikeHandler(request, h) {
