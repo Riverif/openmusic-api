@@ -4,30 +4,27 @@ const { nanoid } = require("nanoid");
 const InvariantError = require("../../exceptions/InvariantError");
 
 class PlaylistSongsService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+    this._cacheService = cacheService;
   }
 
   async addPlaylistSong(playlistId, songId) {
-    try {
-      const id = `playlistSong-${nanoid(16)}`;
+    const id = `playlistSong-${nanoid(16)}`;
 
-      const query = {
-        text: "INSERT INTO playlist_songs VALUES($1, $2, $3) RETURNING id",
-        values: [id, playlistId, songId],
-      };
+    const query = {
+      text: "INSERT INTO playlist_songs VALUES($1, $2, $3) RETURNING id",
+      values: [id, playlistId, songId],
+    };
 
-      const result = await this._pool.query(query);
+    const result = await this._pool.query(query);
 
-      if (!result.rows[0].id) {
-        throw new InvariantError("Playlists gagal ditambahkan");
-      }
-
-      return result.rows[0].id;
-    } catch (error) {
-      console.log(error);
-      throw new Error(error);
+    if (!result.rows[0].id) {
+      throw new InvariantError("Playlists gagal ditambahkan");
     }
+
+    await this._cacheService.delete(`playlist:${playlistId}`);
+    return result.rows[0].id;
   }
 
   async deletePlaylistSong(playlistId, songId) {
@@ -41,6 +38,8 @@ class PlaylistSongsService {
     if (!result.rows.length) {
       throw new InvariantError("Playlist gagal dihapus");
     }
+
+    await this._cacheService.delete(`playlist:${playlistId}`);
   }
 }
 

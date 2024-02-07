@@ -60,14 +60,20 @@ const init = async () => {
   const cacheService = new CacheService();
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
-  const collaborationsService = new CollaborationsService(usersService);
+  const collaborationsService = new CollaborationsService(
+    usersService,
+    cacheService,
+  );
 
-  const albumsService = new AlbumsService();
+  const albumsService = new AlbumsService(cacheService);
   const songsService = new SongsService();
   const userAlbumLikesService = new UserAlbumLikesService(cacheService);
 
-  const playlistsService = new PlaylistsService(collaborationsService);
-  const playlistSongsService = new PlaylistSongsService();
+  const playlistsService = new PlaylistsService(
+    collaborationsService,
+    cacheService,
+  );
+  const playlistSongsService = new PlaylistSongsService(cacheService);
   const playlistSongActivitiesService = new PlaylistSongActivitiesService();
 
   const storageService = new StorageService(
